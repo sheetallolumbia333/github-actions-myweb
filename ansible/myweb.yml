@@ -1,0 +1,39 @@
+---
+- name: Install Docker, Pull Image and Run Container
+  hosts: docker_hosts
+  become: yes
+
+  vars:
+    docker_image: sheetallolumbia333/myweb:v1
+    container_name: myweb
+    container_port: 80
+    host_port: 80
+
+  tasks:
+
+    - name: Install Docker (RedHat/Amazon Linux)
+      when: ansible_facts['os_family'] == "RedHat"
+      dnf:
+        name: docker
+        state: present
+        update_cache: yes
+
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Pull Docker image
+      community.docker.docker_image:
+        name: "{{ docker_image }}"
+        source: pull
+
+    - name: Run Docker container
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        image: "{{ docker_image }}"
+        state: started
+        restart_policy: always
+        ports:
+          - "{{ host_port }}:{{ container_port }}"

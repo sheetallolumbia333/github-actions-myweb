@@ -1,0 +1,7 @@
+aws_region = "us-east-1"
+ami_id        = "ami-0c1fe732b5494dc14"
+instance_type = "t3.micro"
+key_name      = "mytestkey"
+instance_name = "terraform web"
+ssh_cidr  = "18.208.213.113/32"
+http_cidr = "0.0.0.0/0"
