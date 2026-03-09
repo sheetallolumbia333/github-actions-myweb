@@ -11,24 +11,49 @@ provider "aws" {
   region = var.aws_region
 }
 
-resource "aws_security_group" "ec2_sg" {
-  name        = "terraform-ec2web-sg"
-  description = "Security group for Terraform EC2 instance"
+data "aws_vpc" "default" {
+  default = true
+}
+
+
+data "aws_subnets" "public_subnets" {
+  filter {
+    name   = "map-public-ip-on-launch"
+    values = ["true"]
+  }
+
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
+
+
+resource "aws_security_group" "devops_sg" {
+  name   = "sg123"
+  vpc_id = data.aws_vpc.default.id
 
   ingress {
-    description = "SSH access"
+    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.ssh_cidr]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    description = "HTTP access"
+    description = "App Port"
+    from_port   = 8056
+    to_port     = 8056
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+   ingress {
+    description = "App Port"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = [var.http_cidr]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -37,26 +62,22 @@ resource "aws_security_group" "ec2_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  tags = {
-    Name        = "terraform-ec2-sg"
-    ManagedBy  = "Terraform"
-    Environment = "dev"
-  }
 }
 
-resource "aws_instance" "this" {
+
+resource "aws_instance" "devops_ec2" {
   ami           = var.ami_id
-  instance_type = var.instance_type
+  instance_type = "t2.medium"
   key_name      = var.key_name
 
-   vpc_security_group_ids = [
-    aws_security_group.ec2_sg.id
-  ]
+  # subnet_id = data.aws_subnets.public_subnets[0]
+  subnet_id = data.aws_subnets.public_subnets.ids[0]
+  vpc_security_group_ids = [aws_security_group.devops_sg.id]
+
+  associate_public_ip_address = true
 
   tags = {
-    Name        = var.instance_name
-    Environment = "dev"
-    ManagedBy   = "Terraform"
+    Name = "DevOps-Docker-Server"
   }
 }
+
