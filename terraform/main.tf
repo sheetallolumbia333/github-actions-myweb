@@ -12,7 +12,7 @@ provider "aws" {
 }
 
 resource "aws_security_group" "ec2_sg" {
-  name        = "terraform-ec2-sg"
+  name        = "terraform-ec2web-sg"
   description = "Security group for Terraform EC2 instance"
 
   ingress {
