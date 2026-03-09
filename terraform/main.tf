@@ -65,7 +65,7 @@ resource "aws_security_group" "devops_sg" {
 }
 
 
-resource "aws_instance" "this" {
+resource "aws_instance" "devops_ec2" {
   ami           = var.ami_id
   instance_type = "t2.medium"
   key_name      = var.key_name

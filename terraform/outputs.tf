@@ -1,9 +1,4 @@
-output "instance_id" {
-  description = "EC2 Instance ID"
-  value       = aws_instance.this.id
-}
-
 output "public_ip" {
   description = "Public IP address of EC2"
-  value       = aws_instance.this.public_ip
+  value       = aws_instance.devops_ec2.public_ip
 }
