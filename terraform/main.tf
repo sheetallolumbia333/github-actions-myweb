@@ -30,7 +30,7 @@ data "aws_subnets" "public_subnets" {
 
 
 resource "aws_security_group" "devops_sg" {
-  name   = "sg123"
+  name   = "dev"
   vpc_id = data.aws_vpc.default.id
 
   ingress {
@@ -65,7 +65,7 @@ resource "aws_security_group" "devops_sg" {
 }
 
 
-resource "aws_instance" "devops_ec2" {
+resource "aws_instance" "this" {
   ami           = var.ami_id
   instance_type = "t2.medium"
   key_name      = var.key_name
