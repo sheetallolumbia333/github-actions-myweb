@@ -36,3 +36,65 @@ jobs:
       run: |
         docker push $IMAGE_NAME:${{ github.sha }}
         docker push $IMAGE_NAME:latest
+
+    # 5. Check AWS Credentials
+    - name: Check AWS Identity
+      run: aws sts get-caller-identity
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    # 6. Setup Terraform
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: $TF_VERSION
+
+    # 7. Terraform Init
+    - name: Terraform Init
+      working-directory: terraform
+      run: terraform init
+
+    # 8. Terraform Apply
+    - name: Terraform Apply
+      working-directory: terraform
+      run: terraform apply -auto-approve
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    # 9. Get EC2 Public IP
+    - name: Get Server IP
+      id: tf_output
+      working-directory: terraform
+      run: |
+        echo "ip=$(terraform output -raw public_ip)" >> $GITHUB_OUTPUT
+
+   
+    # 10. Setup SSH Key
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/mytestkey.pem
+        chmod 600 ~/.ssh/mytestkey.pem
+
+    # 11. Install Ansible
+    - name: Install Ansible
+      run: |
+        sudo apt update
+        sudo apt install -y ansible
+
+    # 12. Add EC2 to known_hosts
+    - name: Add EC2 to known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ steps.tf_output.outputs.ip }} >> ~/.ssh/known_hosts
+
+    # 13. Run Ansible Playbook
+    - name: Run Ansible
+      run: |
+        ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i "${{ steps.tf_output.outputs.ip }}," \
+        --private-key ~/.ssh/mytestkey.pem \
+        -u ubuntu \
+        ansible/deploy.yml \
+        --extra-vars "image=$IMAGE_NAME:${{ github.sha }}"
