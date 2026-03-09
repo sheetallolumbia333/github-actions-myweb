@@ -96,5 +96,5 @@ jobs:
         ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i "${{ steps.tf_output.outputs.ip }}," \
         --private-key ~/.ssh/mytestkey.pem \
         -u ubuntu \
-        ansible/deploy.yml \
+        ansible/myweb.yml \
         --extra-vars "image=$IMAGE_NAME:${{ github.sha }}"
